@@ -36,8 +36,8 @@ repositories {
 }
 
 dependencies {
-    compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.8.4"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.6.1"
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.8.5"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.5"
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
     testCompile group: 'org.jetbrains.kotlin', name: 'kotlin-test', version: '1.0.6'
