@@ -7,6 +7,10 @@ import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import kotlin.reflect.jvm.javaConstructor
+import kotlin.reflect.jvm.javaMethod
+import kotlin.reflect.memberProperties
+import kotlin.reflect.primaryConstructor
 
 class SerializationDslSpec : Spek({
     describe("Serialization DSL"){
@@ -68,6 +72,24 @@ class SerializationDslSpec : Spek({
                 serialized.payload["newColor"].should.equal(colorChanged.newColor)
             }
 
+            it("should deserialize all constructor arguments as payload by default"){
+                val serialization = serialize<ColorChangedEvent>()
+
+                val serialized = serialization(colorChanged)
+
+                serialized.payload["oldColor"].should.equal(colorChanged.oldColor)
+                serialized.payload["newColor"].should.equal(colorChanged.newColor)
+                serialized.payload["timeStamp"].should.equal(colorChanged.timeStamp)
+            }
+
+            it("should serialize empty constructor to empty payload"){
+                val serialization = serialize<EmptyEvent>()
+
+                val serialized = serialization(EmptyEvent())
+
+                serialized.payload.should.equal(emptyMap())
+            }
+
             it("should serialize Domain Event"){
                 val processed = colorChanged.serialize().deserialize()
 
@@ -113,9 +135,18 @@ class Serialization<E: DomainEvent> {
     operator fun invoke(event: E): SerializedDomainEvent {
         val type = this.type?.invoke(event) ?: event.javaClass.name
         val meta = initMeta?.invoke(Meta())?.invoke(event)?.pairs?.toMap() ?: emptyMap()
-        val payload = initPayload?.invoke(Payload())?.invoke(event)?.pairs?.toMap() ?: emptyMap()
+        val payload = initPayload?.invoke(Payload())?.invoke(event)?.pairs?.toMap() ?: pairConstructorParameters(event)
 
         return SerializedDomainEvent(type, meta, payload)
+    }
+
+    private fun pairConstructorParameters(event: E): Map<String, Any> {
+        val parameters = event.javaClass.kotlin.primaryConstructor?.parameters?.map { it.name } ?: emptyList()
+        val memberProperties = event.javaClass.kotlin.memberProperties
+
+        return memberProperties.filter { parameters.contains(it.name) }.map {
+            it.name to it.get(event)!!
+        }.toMap()
     }
 
     class Payload : PairContainer()
@@ -157,3 +188,9 @@ data class ColorChangedEvent(val timeStamp: Long, val oldColor: Color, val newCo
 }
 
 data class Color(val red: Byte, val green: Byte, val blue: Byte, val alpha: Byte)
+
+class EmptyEvent : DomainEvent {
+    override fun serialize(): SerializableDomainEvent {
+        throw NotImplementedError()
+    }
+}
