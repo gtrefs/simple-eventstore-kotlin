@@ -93,14 +93,6 @@ class Serialization<E: DomainEvent> {
         this.type = type
     }
 
-    operator fun invoke(event: E): SerializedDomainEvent {
-        val type = this.type?.invoke(event) ?: event.javaClass.name
-        val meta = initMeta?.invoke(Meta())?.invoke(event)?.pairs?.toMap() ?: emptyMap()
-        val payload = initPayload?.invoke(Payload())?.invoke(event)?.pairs?.toMap() ?: emptyMap()
-
-        return SerializedDomainEvent(type, meta, payload)
-    }
-
     fun  meta(init: PairContainer.(E) -> Unit): Unit {
         initMeta = collectPairs(init)
     }
@@ -114,33 +106,44 @@ class Serialization<E: DomainEvent> {
             container.init(event)
             container
         }}
-}
 
-abstract class PairContainer {
-    val pairs = arrayListOf<Pair<String, Any>>()
-    operator fun Pair<String, Any>.unaryPlus():Unit {
-        pairs.add(this)
+    operator fun invoke(event: E): SerializedDomainEvent {
+        val type = this.type?.invoke(event) ?: event.javaClass.name
+        val meta = initMeta?.invoke(Meta())?.invoke(event)?.pairs?.toMap() ?: emptyMap()
+        val payload = initPayload?.invoke(Payload())?.invoke(event)?.pairs?.toMap() ?: emptyMap()
+
+        return SerializedDomainEvent(type, meta, payload)
+    }
+
+    class Payload : PairContainer()
+
+    class Meta : PairContainer()
+
+    abstract class PairContainer {
+        val pairs = arrayListOf<Pair<String, Any>>()
+        operator fun Pair<String, Any>.unaryPlus():Unit {
+            pairs.add(this)
+        }
     }
 }
 
-class Payload : PairContainer()
-
-class Meta : PairContainer()
+private val serialization = serialize<ColorChangedEvent> {
+    meta {
+        +("time" to it.timeStamp)
+    }
+    payload {
+        +("oldColor" to it.oldColor)
+        +("newColor" to it.newColor)
+    }
+}
 
 data class ColorChangedEvent(val timeStamp: Long, val oldColor: Color, val newColor: Color): DomainEvent {
-    override fun serialize(): SerializedDomainEvent = serialized
 
     private val serialized by lazy {
-        serialize<ColorChangedEvent> {
-            meta {
-                +("time" to it.timeStamp)
-            }
-            payload {
-                +("oldColor" to it.oldColor)
-                +("newColor" to it.newColor)
-            }
-        }(this)
+        serialization(this)
     }
+
+    override fun serialize(): SerializedDomainEvent = serialized
 
     companion object : DomainEventFactory {
         override fun deserialize(event: SerializedDomainEvent): DomainEvent =
