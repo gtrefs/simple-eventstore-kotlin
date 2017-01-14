@@ -43,7 +43,7 @@ class SerializationDslSpec : Spek({
             it("should provide means to define meta information"){
                 val serialization = serialize<ColorChangedEvent> {
                     meta {
-                        +("timeStamp" to it.timeStamp)
+                        "timeStamp" with it.timeStamp
                     }
                 }
 
@@ -57,12 +57,15 @@ class SerializationDslSpec : Spek({
             it("should provide means to define the payload"){
                 val serialization = serialize<ColorChangedEvent> {
                     payload {
-                        +("oldColor" to it.oldColor)
-                        +("newColor" to it.newColor)
+                        "oldColor" with it.oldColor
+                        "newColor" with it.newColor
                     }
                 }
 
-                println(serialization(colorChanged))
+                val serialized = serialization(colorChanged)
+
+                serialized.payload["oldColor"].should.equal(colorChanged.oldColor)
+                serialized.payload["newColor"].should.equal(colorChanged.newColor)
             }
 
             it("should serialize Domain Event"){
@@ -121,19 +124,21 @@ class Serialization<E: DomainEvent> {
 
     abstract class PairContainer {
         val pairs = arrayListOf<Pair<String, Any>>()
-        operator fun Pair<String, Any>.unaryPlus():Unit {
-            pairs.add(this)
+
+        infix fun String.with(that: Any): Unit {
+            pairs.add(this to that)
         }
     }
 }
 
 private val serialization = serialize<ColorChangedEvent> {
     meta {
-        +("time" to it.timeStamp)
+        "time" with it.timeStamp
     }
+
     payload {
-        +("oldColor" to it.oldColor)
-        +("newColor" to it.newColor)
+        "oldColor" with it.oldColor
+        "newColor" with it.newColor
     }
 }
 
