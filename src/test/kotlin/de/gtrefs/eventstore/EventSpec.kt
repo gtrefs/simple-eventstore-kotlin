@@ -27,10 +27,10 @@ class EventSpec : Spek({
 })
 
 data class TestEvent(val name: String): DomainEvent {
-    override fun serialize(): SerializableDomainEvent = SerializableDomainEvent(TestEvent::class.java.name,
+    override fun serialize(): SerializedDomainEvent = SerializedDomainEvent(TestEvent::class.java.name,
             mapOf("name" to name),
             emptyMap())
     companion object Factory: DomainEventFactory {
-        override fun deserialize(event: SerializableDomainEvent): TestEvent = TestEvent(event.meta["name"] as String)
+        override fun deserialize(event: SerializedDomainEvent): TestEvent = TestEvent(event.meta["name"] as String)
     }
 }

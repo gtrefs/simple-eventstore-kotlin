@@ -55,21 +55,21 @@ class WebLoginExampleSpec : Spek({
 })
 
 data class UserLoggedIn(val time: LocalDateTime, val user: User) : DomainEvent {
-    override fun serialize(): SerializableDomainEvent =
-            SerializableDomainEvent(UserLoggedIn::class.java.name,
+    override fun serialize(): SerializedDomainEvent =
+            SerializedDomainEvent(UserLoggedIn::class.java.name,
                     emptyMap(),
                     mapOf("time" to time) + user.serialize())
 
 
     companion object : DomainEventFactory {
         @Suppress("UNCHECKED_CAST")
-        override fun deserialize(event: SerializableDomainEvent): DomainEvent =
+        override fun deserialize(event: SerializedDomainEvent): DomainEvent =
                 UserLoggedIn(toLocalDateTime(event.payload["time"] as ArrayList<Int>), User.deserialize(event.payload))
     }
 }
 
 data class UserRegistered(val time: LocalDateTime, val user: User) : DomainEvent {
-    override fun serialize(): SerializableDomainEvent = SerializableDomainEvent(
+    override fun serialize(): SerializedDomainEvent = SerializedDomainEvent(
             UserRegistered::class.java.name,
             mapOf("time" to time),
             user.serialize()
@@ -77,7 +77,7 @@ data class UserRegistered(val time: LocalDateTime, val user: User) : DomainEvent
 
     companion object : DomainEventFactory {
         @Suppress("UNCHECKED_CAST")
-        override fun deserialize(event: SerializableDomainEvent): DomainEvent {
+        override fun deserialize(event: SerializedDomainEvent): DomainEvent {
             val time = toLocalDateTime(event.meta["time"] as ArrayList<Int>)
             return UserRegistered(time, User.deserialize(event.payload))
         }

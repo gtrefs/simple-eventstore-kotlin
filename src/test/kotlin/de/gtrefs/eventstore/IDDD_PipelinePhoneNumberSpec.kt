@@ -55,10 +55,10 @@ class PhoneNumbersPublisher(val eventBus: EventBus){
 }
 
 data class AllPhoneNumbersListed(val numbers: List<String>) : DomainEvent {
-    override fun serialize(): SerializableDomainEvent =
-            SerializableDomainEvent(AllPhoneNumbersListed::class.java.name, payload = mapOf("numbers" to numbers))
+    override fun serialize(): SerializedDomainEvent =
+            SerializedDomainEvent(AllPhoneNumbersListed::class.java.name, payload = mapOf("numbers" to numbers))
     companion object : DomainEventFactory {
-        override fun deserialize(event: SerializableDomainEvent): DomainEvent {
+        override fun deserialize(event: SerializedDomainEvent): DomainEvent {
             @Suppress("UNCHECKED_CAST")
             return AllPhoneNumbersListed(numbers = event.payload["numbers"] as List<String>)
         }
@@ -75,13 +75,13 @@ class PhoneNumberFinder(val eventBus: EventBus, val text: String){
 }
 
 data class PhoneNumbersMatched(val foundNumbers: List<String>) : DomainEvent {
-    override fun serialize(): SerializableDomainEvent {
-        return SerializableDomainEvent(PhoneNumbersMatched::class.java.name, payload = mapOf("foundNumbers" to foundNumbers))
+    override fun serialize(): SerializedDomainEvent {
+        return SerializedDomainEvent(PhoneNumbersMatched::class.java.name, payload = mapOf("foundNumbers" to foundNumbers))
     }
 
     companion object : DomainEventFactory {
         @Suppress("UNCHECKED_CAST")
-        override fun deserialize(event: SerializableDomainEvent): DomainEvent =
+        override fun deserialize(event: SerializedDomainEvent): DomainEvent =
                 PhoneNumbersMatched(event.payload["foundNumbers"] as List<String>)
 
     }
@@ -94,12 +94,12 @@ class MatchedPhoneNumberCounter(val eventBus: EventBus){
 }
 
 data class MatchedPhoneNumbersCounted(val count: Int) : DomainEvent {
-    override fun serialize(): SerializableDomainEvent {
-        return SerializableDomainEvent(MatchedPhoneNumbersCounted::class.java.name, payload = mapOf("count" to count))
+    override fun serialize(): SerializedDomainEvent {
+        return SerializedDomainEvent(MatchedPhoneNumbersCounted::class.java.name, payload = mapOf("count" to count))
     }
 
     companion object : DomainEventFactory{
-        override fun deserialize(event: SerializableDomainEvent): DomainEvent {
+        override fun deserialize(event: SerializedDomainEvent): DomainEvent {
             return MatchedPhoneNumbersCounted(event.payload["count"] as Int)
         }
     }

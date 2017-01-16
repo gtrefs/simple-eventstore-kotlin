@@ -8,27 +8,27 @@ import java.nio.file.StandardOpenOption
 import java.util.*
 
 interface Storage {
-    fun write(it: SerializableDomainEvent): Unit
-    fun readAll(): List<SerializableDomainEvent>
+    fun write(it: SerializedDomainEvent): Unit
+    fun readAll(): List<SerializedDomainEvent>
 
     companion object {
         fun jsonFileStorage(file: File): JsonFileStorage = JsonFileStorage(file)
         fun inMemory(): InMemory = InMemory()
         fun devNull(): Storage = object : Storage {
-            override fun readAll(): List<SerializableDomainEvent> = emptyList()
-            override fun write(it: SerializableDomainEvent){}
+            override fun readAll(): List<SerializedDomainEvent> = emptyList()
+            override fun write(it: SerializedDomainEvent){}
         }
     }
 }
 
 class InMemory : Storage {
-    var events:ArrayList<SerializableDomainEvent> = ArrayList()
+    var events:ArrayList<SerializedDomainEvent> = ArrayList()
 
-    override fun readAll(): List<SerializableDomainEvent> {
+    override fun readAll(): List<SerializedDomainEvent> {
         return events
     }
 
-    override fun write(it: SerializableDomainEvent) {
+    override fun write(it: SerializedDomainEvent) {
         events.add(it)
     }
 
@@ -39,14 +39,14 @@ class JsonFileStorage(val file: File) : Storage {
     val mapper = jacksonObjectMapper()
             .registerModule(JavaTimeModule())
 
-    override fun write(it: SerializableDomainEvent): Unit {
+    override fun write(it: SerializedDomainEvent): Unit {
         val json = mapper.writeValueAsString(it) + System.lineSeparator()
         Files.write(file.toPath(), json.toByteArray(), StandardOpenOption.WRITE,
                 StandardOpenOption.CREATE,
                 StandardOpenOption.APPEND)
     }
 
-    override fun readAll(): List<SerializableDomainEvent> =
-        file.readLines().map { mapper.readValue(it, SerializableDomainEvent::class.java) }
+    override fun readAll(): List<SerializedDomainEvent> =
+        file.readLines().map { mapper.readValue(it, SerializedDomainEvent::class.java) }
 
 }

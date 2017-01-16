@@ -3,16 +3,16 @@ package de.gtrefs.eventstore
 import kotlin.reflect.companionObjectInstance
 
 interface DomainEvent {
-    fun serialize(): SerializableDomainEvent
+    fun serialize(): SerializedDomainEvent
 }
 
 interface DomainEventFactory {
-    fun deserialize(event: SerializableDomainEvent): DomainEvent
+    fun deserialize(event: SerializedDomainEvent): DomainEvent
 }
 
-data class SerializableDomainEvent(val type: String = "",
-                                   val meta: Map<String, Any> = emptyMap(),
-                                   val payload: Map<String, Any> = emptyMap()){
+data class SerializedDomainEvent(val type: String = "",
+                                 val meta: Map<String, Any> = emptyMap(),
+                                 val payload: Map<String, Any> = emptyMap()){
     private val factory by lazy {
         Class.forName(type).kotlin.companionObjectInstance as DomainEventFactory
     }
