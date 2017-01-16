@@ -138,7 +138,9 @@ class SerializationDslSpec : Spek({
     }
 })
 
-fun <E: DomainEvent> serialize(): Serialization<E> = serialize {}
+fun <E: DomainEvent> serialize(event: E): SerializedDomainEvent = serialize<E>()(event)
+
+fun <E: DomainEvent> serialize(): Serialization<E> = serialize<E>{}
 
 fun <E : DomainEvent> serialize(init: Serialization<E>.() -> Unit): Serialization<E> {
     val serialization = Serialization<E>()
