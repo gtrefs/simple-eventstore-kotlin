@@ -7,10 +7,10 @@ import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import kotlin.reflect.jvm.javaConstructor
-import kotlin.reflect.jvm.javaMethod
+import java.util.*
 import kotlin.reflect.memberProperties
 import kotlin.reflect.primaryConstructor
+import kotlin.test.assertFailsWith
 
 class SerializationDslSpec : Spek({
     describe("Serialization DSL"){
@@ -82,6 +82,18 @@ class SerializationDslSpec : Spek({
                 serialized.payload["timeStamp"].should.equal(colorChanged.timeStamp)
             }
 
+            it("should not serialize constructor arguments which are excluded"){
+                val serialization = serialize<ColorChangedEvent>{
+                    payload {
+                       without("timeStamp")
+                    }
+                }
+
+                val serialized = serialization(colorChanged)
+
+                serialized.payload.keys == setOf("oldColor", "newColor")
+            }
+
             it("should serialize empty constructor to empty payload"){
                 val serialization = serialize<EmptyEvent>()
 
@@ -96,68 +108,125 @@ class SerializationDslSpec : Spek({
                 processed.should.equal(colorChanged)
             }
 
+            it("explicit parameters cannot be excluded"){
+                val serialization = serialize<ColorChangedEvent>{
+                    payload {
+                        "timeStamp" with it.timeStamp
+                        without("timeStamp")
+                    }
+                }
+
+                assertFailsWith<IllegalArgumentException> {
+                    serialization(colorChanged)
+                }
+            }
+
+            it("excluded parameters cannot be added"){
+                val serialization = serialize<ColorChangedEvent>{
+                    payload {
+                        without("timeStamp")
+                        "timeStamp" with it.timeStamp
+                    }
+                }
+
+                assertFailsWith<IllegalArgumentException> {
+                    serialization(colorChanged)
+                }
+            }
+
         }
     }
 })
 
-fun <E: DomainEvent> serialize(): (E) -> SerializedDomainEvent = serialize<E> {}
+fun <E: DomainEvent> serialize(): Serialization<E> = serialize {}
 
-fun <E : DomainEvent> serialize(init: Serialization<E>.() -> Unit): (E) -> SerializedDomainEvent = {
+fun <E : DomainEvent> serialize(init: Serialization<E>.() -> Unit): Serialization<E> {
     val serialization = Serialization<E>()
     serialization.init()
-    serialization(it)
+    return serialization
 }
 
 class Serialization<E: DomainEvent> {
 
     private var type: ((E) -> String)? = null
-    private var initMeta: ((PairContainer) -> (E) -> PairContainer)? = null
-    private var initPayload: ((PairContainer) -> (E) -> PairContainer)? = null
+    private var initMeta: ((ParameterContainer) -> (E) -> ParameterContainer)? = null
+    private var initPayload: ((ParameterContainer) -> (E) -> ParameterContainer)? = null
 
     fun type(type: (E) -> String): Unit {
         this.type = type
     }
 
-    fun  meta(init: PairContainer.(E) -> Unit): Unit {
-        initMeta = collectPairs(init)
+    fun  meta(init: ParameterContainer.(E) -> Unit): Unit {
+        initMeta = collect(init)
     }
 
-    fun  payload(init: PairContainer.(E) -> Unit): Unit {
-        initPayload = collectPairs(init)
+    fun  payload(init: ParameterContainer.(E) -> Unit): Unit {
+        initPayload = collect(init)
     }
 
-    private fun collectPairs(init: PairContainer.(E) -> Unit): (PairContainer) -> (E) -> PairContainer =
+    private fun collect(init: ParameterContainer.(E) -> Unit): (ParameterContainer) -> (E) -> ParameterContainer =
         {container -> {event ->
             container.init(event)
             container
         }}
 
-    operator fun invoke(event: E): SerializedDomainEvent {
-        val type = this.type?.invoke(event) ?: event.javaClass.name
-        val meta = initMeta?.invoke(Meta())?.invoke(event)?.pairs?.toMap() ?: emptyMap()
-        val payload = initPayload?.invoke(Payload())?.invoke(event)?.pairs?.toMap() ?: pairConstructorParameters(event)
+    operator fun invoke(event: E): SerializedDomainEvent =
+            SerializedDomainEvent(typeOf(event), metaOf(event), payloadOf(event))
 
-        return SerializedDomainEvent(type, meta, payload)
-    }
+    private fun typeOf(event: E) = this.type?.invoke(event) ?: event.javaClass.name
 
-    private fun pairConstructorParameters(event: E): Map<String, Any> {
+    private fun metaOf(event: E) = parametersOf(event, init = initMeta)
+
+    private fun payloadOf(event: E) = parametersOf(event, parametersByName(event), initPayload)
+
+    private fun parametersByName(event: E): Map<String, Any> {
         val parameters = event.javaClass.kotlin.primaryConstructor?.parameters?.map { it.name } ?: emptyList()
-        val memberProperties = event.javaClass.kotlin.memberProperties
+        val properties = event.javaClass.kotlin.memberProperties
 
-        return memberProperties.filter { parameters.contains(it.name) }.map {
+        return properties.filter { parameters.contains(it.name) }.map {
             it.name to it.get(event)!!
         }.toMap()
     }
 
-    class Payload : PairContainer()
+    private fun parametersOf(event: E,
+                             default: Map<String, Any> = emptyMap(),
+                             init: ((ParameterContainer) -> (E) -> ParameterContainer)? = null): Map<String, Any> {
 
-    class Meta : PairContainer()
+        val container = initContainer(event, init)
+        val explicit = container.explicit.toMap()
+        val exclude = container.exclude
 
-    abstract class PairContainer {
-        val pairs = arrayListOf<Pair<String, Any>>()
+        return when(Pair(explicit.isEmpty(), exclude.isEmpty())){
+            Pair(true, true) -> default
+            Pair(true, false) -> remove(from = default, keys = exclude)
+            else -> explicit
+        }
+    }
+
+    private fun initContainer(event: E, init: ((ParameterContainer) -> (E) -> ParameterContainer)?): ParameterContainer {
+        val container = ParameterContainer()
+        init?.invoke(container)?.invoke(event)
+        return container
+    }
+
+    private fun remove(from: Map<String, Any>, keys: ArrayList<String>) = from.filterKeys { it !in keys }
+
+    class ParameterContainer {
+        internal val explicit = arrayListOf<Pair<String, Any>>()
+        internal val exclude = arrayListOf<String>()
 
         infix fun String.with(that: Any): Unit {
-            pairs.add(this to that)
+            if(this in exclude){
+                throw IllegalArgumentException("Cannot add parameter with name '${this}'. It was excluded before.")
+            }
+            explicit += this to that
+        }
+
+        fun without(parameter: String) {
+            if(explicit.any { it.first == parameter }){
+                throw IllegalArgumentException("Cannot exclude parameter '$parameter'. It was explicitly added before.")
+            }
+            exclude += parameter
         }
     }
 }
@@ -190,7 +259,7 @@ data class ColorChangedEvent(val timeStamp: Long, val oldColor: Color, val newCo
 data class Color(val red: Byte, val green: Byte, val blue: Byte, val alpha: Byte)
 
 class EmptyEvent : DomainEvent {
-    override fun serialize(): SerializableDomainEvent {
+    override fun serialize(): SerializedDomainEvent {
         throw NotImplementedError()
     }
 }
