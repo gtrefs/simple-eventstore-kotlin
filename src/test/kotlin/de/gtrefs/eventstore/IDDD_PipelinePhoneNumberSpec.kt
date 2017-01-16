@@ -55,8 +55,7 @@ class PhoneNumbersPublisher(val eventBus: EventBus){
 }
 
 data class AllPhoneNumbersListed(val numbers: List<String>) : DomainEvent {
-    override fun serialize(): SerializedDomainEvent =
-            SerializedDomainEvent(AllPhoneNumbersListed::class.java.name, payload = mapOf("numbers" to numbers))
+    override fun serialize(): SerializedDomainEvent = serialize<AllPhoneNumbersListed>()(this)
     companion object : DomainEventFactory {
         override fun deserialize(event: SerializedDomainEvent): DomainEvent {
             @Suppress("UNCHECKED_CAST")
