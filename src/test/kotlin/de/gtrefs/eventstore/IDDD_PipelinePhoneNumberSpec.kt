@@ -78,9 +78,11 @@ class PhoneNumberFinder(val eventBus: EventBus, val text: String){
 }
 
 data class PhoneNumbersMatched(val foundNumbers: List<String>) : DomainEvent {
-    override fun serialize(): SerializedDomainEvent {
-        return SerializedDomainEvent(PhoneNumbersMatched::class.java.name, payload = mapOf("foundNumbers" to foundNumbers))
+    private val serialized by lazy {
+        serialize(this)
     }
+
+    override fun serialize(): SerializedDomainEvent = serialized
 
     companion object : DomainEventFactory {
         @Suppress("UNCHECKED_CAST")
@@ -97,9 +99,11 @@ class MatchedPhoneNumberCounter(val eventBus: EventBus){
 }
 
 data class MatchedPhoneNumbersCounted(val count: Int) : DomainEvent {
-    override fun serialize(): SerializedDomainEvent {
-        return SerializedDomainEvent(MatchedPhoneNumbersCounted::class.java.name, payload = mapOf("count" to count))
+    private val serialized by lazy {
+        serialize(this)
     }
+
+    override fun serialize(): SerializedDomainEvent = serialized
 
     companion object : DomainEventFactory{
         override fun deserialize(event: SerializedDomainEvent): DomainEvent {
