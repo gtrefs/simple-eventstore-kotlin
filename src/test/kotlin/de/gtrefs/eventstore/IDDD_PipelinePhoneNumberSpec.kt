@@ -32,7 +32,7 @@ class PipelinePhoneNumberSpec : Spek({
                 eventStore.version().should.equal(Version(3))
             }
 
-            it("87 phone numbers should be found"){
+            it("74 phone numbers should be found"){
                 val matchedPhoneNumbersEvents:List<MatchedPhoneNumbersCounted> = eventStore.project {
                     it.fold(listOf<MatchedPhoneNumbersCounted>(), { l,e -> when(e){
                         is MatchedPhoneNumbersCounted -> l + e
