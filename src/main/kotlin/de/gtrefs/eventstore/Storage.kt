@@ -6,10 +6,12 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 interface Storage {
     fun write(it: SerializedDomainEvent): Unit
     fun readAll(): List<SerializedDomainEvent>
+    fun readAllAsync(): CompletableFuture<List<SerializedDomainEvent>> = CompletableFuture.supplyAsync { readAll() }
 
     companion object {
         fun jsonFileStorage(file: File): JsonFileStorage = JsonFileStorage(file)
@@ -22,6 +24,7 @@ interface Storage {
 }
 
 class InMemory : Storage {
+
     var events:ArrayList<SerializedDomainEvent> = ArrayList()
 
     override fun readAll(): List<SerializedDomainEvent> {

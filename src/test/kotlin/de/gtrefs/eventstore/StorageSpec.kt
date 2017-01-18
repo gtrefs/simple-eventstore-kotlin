@@ -15,11 +15,11 @@ class JsonFileStorageSpec : Spek ({
     describe("JsonFileStorage"){
         val file: File = createTempFile("storage")
         val storage = jsonFileStorage(file)
+        val testEvent = TestEvent("test").serialize()
+        val testEvents = listOf(TestEvent("test1").serialize(), TestEvent("test2").serialize())
 
         on("Writing") {
 
-            val testEvent = TestEvent("test").serialize()
-            val testEvents = listOf(TestEvent("test1").serialize(), TestEvent("test2").serialize())
 
             it("should append event to it's file") {
                 storage.write(testEvent)
@@ -49,11 +49,21 @@ class JsonFileStorageSpec : Spek ({
 
                 tuples.should.equal(listOf(TestEvent("file").serialize()))
             }
+
+            it("should read async"){
+                truncate(file)
+                testEvents.forEach { storage.write(it)}
+
+                val tuples = storage.readAllAsync().join()
+
+                tuples.should.equal(testEvents)
+            }
         }
 
         afterGroup {
             Files.deleteIfExists(file.toPath())
         }
+
 
     }
 })
