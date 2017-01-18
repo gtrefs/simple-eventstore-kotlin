@@ -6,10 +6,9 @@ import java.util.concurrent.CompletableFuture
 class EventStore(val storage: Storage) {
 
     fun <S> project(projection: (List<DomainEvent>) -> S) : CompletableFuture<S> {
-        val events = storage.readAll().map { it.deserialize() }
-        return CompletableFuture.supplyAsync({
-            projection(events)
-        })
+        return storage.readAllAsync()
+                .thenApply { it.map { it.deserialize() } }
+                .thenApply { projection(it) }
     }
 
     fun storeEvent(event: DomainEvent, expectedVersion: Version) {
