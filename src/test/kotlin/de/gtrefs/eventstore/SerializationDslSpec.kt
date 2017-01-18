@@ -19,7 +19,6 @@ class SerializationDslSpec : Spek({
                 val serialization = serialize<TestEvent>()
 
                 val serialized = serialization(test)
-
                 serialized.type.should.equal(TestEvent::class.java.name)
             }
 
@@ -88,7 +87,20 @@ class SerializationDslSpec : Spek({
 
                 val serialized = serialization(colorChanged)
 
-                serialized.payload.keys == setOf("oldColor", "newColor")
+                serialized.payload.keys.should.equal(setOf("oldColor", "newColor"))
+            }
+
+            it("explicit key-value-pairs have a higher precedence"){
+                val serialization = serialize<ColorChangedEvent> {
+                    payload {
+                        without("timeStamp")
+                        "time" with it.timeStamp
+                    }
+                }
+
+                val serialized = serialization(colorChanged)
+
+                serialized.payload.should.equal(mapOf("time" to now))
             }
 
             it("should serialize empty constructor to empty payload"){
