@@ -10,7 +10,6 @@ import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
 import java.io.File
 import java.nio.file.Files
-import java.sql.Time
 import java.time.LocalDateTime
 
 class JsonFileStorageSpec : Spek ({
