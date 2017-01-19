@@ -1,5 +1,6 @@
 package de.gtrefs.eventstore
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.io.File
@@ -40,6 +41,7 @@ class InMemory : Storage {
 
 class JsonFileStorage(val file: File) : Storage {
     val mapper = jacksonObjectMapper()
+            .enableDefaultTyping(ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT)
             .registerModule(JavaTimeModule())
 
     override fun write(it: SerializedDomainEvent): Unit {

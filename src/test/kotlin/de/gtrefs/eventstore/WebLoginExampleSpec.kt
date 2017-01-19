@@ -8,7 +8,6 @@ import org.jetbrains.spek.api.dsl.on
 import java.io.File
 import java.nio.file.Files
 import java.time.LocalDateTime
-import java.util.*
 
 class WebLoginExampleSpec : Spek({
     describe("Web login"){
@@ -64,7 +63,7 @@ data class UserLoggedIn(val time: LocalDateTime, val user: User) : DomainEvent {
     companion object : DomainEventFactory {
         @Suppress("UNCHECKED_CAST")
         override fun deserialize(event: SerializedDomainEvent): DomainEvent =
-                UserLoggedIn(toLocalDateTime(event.payload["time"] as ArrayList<Int>), User.deserialize(event.payload))
+                UserLoggedIn(event.payload["time"] as LocalDateTime, User.deserialize(event.payload))
     }
 }
 
@@ -78,8 +77,7 @@ data class UserRegistered(val time: LocalDateTime, val user: User) : DomainEvent
     companion object : DomainEventFactory {
         @Suppress("UNCHECKED_CAST")
         override fun deserialize(event: SerializedDomainEvent): DomainEvent {
-            val time = toLocalDateTime(event.meta["time"] as ArrayList<Int>)
-            return UserRegistered(time, User.deserialize(event.payload))
+            return UserRegistered(event.meta["time"] as LocalDateTime, User.deserialize(event.payload))
         }
 
 
@@ -91,10 +89,6 @@ data class User(val name: String, val password: String, val email: Email){
     companion object {
         fun deserialize(data: Map<String, Any>) = User(data["name"] as String, data["password"] as String, Email(data["email"] as String))
     }
-}
-
-fun toLocalDateTime(t: ArrayList<Int>): LocalDateTime {
-    return LocalDateTime.of(t[0], t[1], t[2], t[3], t[4], t[5], t[6])
 }
 
 data class Email(val email: String)

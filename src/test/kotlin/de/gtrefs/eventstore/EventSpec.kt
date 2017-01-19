@@ -5,6 +5,7 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
+import java.time.LocalDateTime
 import kotlin.reflect.companionObjectInstance
 
 class EventSpec : Spek({
@@ -33,4 +34,13 @@ data class TestEvent(val name: String): DomainEvent {
     companion object Factory: DomainEventFactory {
         override fun deserialize(event: SerializedDomainEvent): TestEvent = TestEvent(event.meta["name"] as String)
     }
+}
+
+data class TimeEvent(val time:LocalDateTime): DomainEvent {
+    override fun serialize(): SerializedDomainEvent = serialize(this)
+    companion object Factory: DomainEventFactory {
+        override fun deserialize(event: SerializedDomainEvent): DomainEvent =
+                TimeEvent(event.payload["time"] as LocalDateTime)
+    }
+
 }
