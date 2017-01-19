@@ -30,6 +30,13 @@ junitPlatform {
     }
 }
 
+sourceSets {
+    examples {
+        compileClasspath += sourceSets.test.compileClasspath
+        runtimeClasspath += sourceSets.test.runtimeClasspath
+    } 
+}
+
 repositories {
     jcenter()
     maven { url "http://dl.bintray.com/jetbrains/spek" }
