@@ -32,10 +32,7 @@ junitPlatform {
 }
 
 sourceSets {
-    examples {
-        compileClasspath += sourceSets.test.compileClasspath
-        runtimeClasspath += sourceSets.test.runtimeClasspath
-    }
+    examples 
 
     test {
         kotlin {
