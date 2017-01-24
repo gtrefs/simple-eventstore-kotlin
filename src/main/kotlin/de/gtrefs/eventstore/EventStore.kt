@@ -14,7 +14,7 @@ class EventStore(val storage: Storage) {
     fun storeEvent(event: DomainEvent, expectedVersion: Version) {
         val currentVersion = version()
         if(currentVersion != expectedVersion){
-            throw IllegalArgumentException("Expected store expectedVersion to be $expectedVersion, but was $currentVersion")
+            throw IllegalArgumentException("Expected store version to be $expectedVersion, but was $currentVersion")
         }
         storeEvent(event)
     }
