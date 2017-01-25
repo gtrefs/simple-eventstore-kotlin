@@ -21,8 +21,6 @@ apply plugin: 'org.junit.platform.gradle.plugin'
 group = 'de.gtrefs'
 version = '0.0.1-SNAPSHOT'
 
-def withExamples = project.hasProperty('withExamples')
-
 junitPlatform {
     filters {
         engines {
@@ -32,17 +30,14 @@ junitPlatform {
 }
 
 sourceSets {
-    examples 
+    examples
+    benchmark
+}
 
-    test {
-        kotlin {
-            if(withExamples) srcDirs += examples.kotlin.srcDirs
-        }
-
-        resources {
-            if(withExamples) srcDirs += examples.resources.srcDirs
-        }
-    }
+["examples", "benchmark"].findAll {project.hasProperty(it)}.each {
+    def sourceSet = sourceSets.maybeCreate(it)
+    sourceSets.test.kotlin.srcDirs += sourceSet.kotlin.srcDirs
+    sourceSets.test.resources.srcDirs += sourceSet.resources.srcDirs
 }
 
 repositories {
