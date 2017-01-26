@@ -35,8 +35,15 @@ junitPlatform {
 }
 
 sourceSets {
-    examples
-    benchmark
+    examples {
+        compileClasspath += sourceSets.test.compileClasspath
+        runtimeClasspath += sourceSets.test.runtimeClasspath
+    }
+
+    benchmark {
+        compileClasspath += sourceSets.test.compileClasspath
+        runtimeClasspath += sourceSets.test.runtimeClasspath
+    }
 }
 
 ["examples", "benchmark"].findAll {project.hasProperty(it)}.each {
