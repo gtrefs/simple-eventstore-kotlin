@@ -6,17 +6,22 @@ buildscript {
 
     repositories {
         mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.junit.platform:junit-platform-gradle-plugin:$junit5_plugin_version"
+        classpath "me.champeau.gradle:jmh-gradle-plugin:0.3.1"
     }
 
 }
 
 apply plugin: 'kotlin'
 apply plugin: 'org.junit.platform.gradle.plugin'
+apply plugin:  "me.champeau.gradle.jmh"
 
 group = 'de.gtrefs'
 version = '0.0.1-SNAPSHOT'
@@ -40,6 +45,14 @@ sourceSets {
     sourceSets.test.resources.srcDirs += sourceSet.resources.srcDirs
 }
 
+jmh {
+    iterations = 10
+    warmupIterations = 10
+    fork = 2
+    threads = 1
+    profilers = ["stack"]
+}
+
 repositories {
     jcenter()
     maven { url "http://dl.bintray.com/jetbrains/spek" }
@@ -55,4 +68,8 @@ dependencies {
     testCompile "com.winterbe:expekt:0.5.0"
     testCompile 'org.jetbrains.spek:spek-api:1.1.0-beta3'
     testRuntime 'org.jetbrains.spek:spek-junit-platform-engine:1.1.0-beta3'
+
+    jmh group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.17.4'
+    jmh group: 'org.openjdk.jmh', name: 'jmh-generator-annprocess', version: '1.17.4'
+
 }
