@@ -26,7 +26,7 @@ interface Storage {
 
 class InMemory : Storage {
 
-    var events:ArrayList<SerializedDomainEvent> = ArrayList()
+    val events:ArrayList<SerializedDomainEvent> = ArrayList()
 
     override fun readAll(): List<SerializedDomainEvent> {
         return events
