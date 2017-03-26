@@ -6,7 +6,7 @@ import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
 import java.time.LocalDateTime
-import kotlin.reflect.companionObjectInstance
+import kotlin.reflect.full.companionObjectInstance
 
 class EventSpec : Spek({
     describe("the event"){

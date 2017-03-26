@@ -1,8 +1,8 @@
 package de.gtrefs.eventstore
 
 import java.util.*
-import kotlin.reflect.memberProperties
-import kotlin.reflect.primaryConstructor
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.primaryConstructor
 
 fun <E: DomainEvent> serialize(event: E): SerializedDomainEvent = serialize<E>()(event)
 

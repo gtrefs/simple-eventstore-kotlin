@@ -69,6 +69,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.8.6"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.6"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     testCompile 'com.google.guava:guava:21.0'
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"

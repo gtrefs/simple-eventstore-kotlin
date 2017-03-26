@@ -1,6 +1,6 @@
 package de.gtrefs.eventstore
 
-import kotlin.reflect.companionObjectInstance
+import kotlin.reflect.full.companionObjectInstance
 
 interface DomainEvent {
     fun serialize(): SerializedDomainEvent
