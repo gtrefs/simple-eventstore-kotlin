@@ -3,6 +3,7 @@ package de.gtrefs.eventstore
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import kotlinx.coroutines.experimental.future.future
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
@@ -12,7 +13,7 @@ import java.util.concurrent.CompletableFuture
 interface Storage {
     fun write(it: SerializedDomainEvent): Unit
     fun readAll(): List<SerializedDomainEvent>
-    fun readAllAsync(): CompletableFuture<List<SerializedDomainEvent>> = CompletableFuture.supplyAsync { readAll() }
+    fun readAllAsync(): CompletableFuture<List<SerializedDomainEvent>> = future { readAll() }
 
     companion object {
         fun jsonFileStorage(file: File): JsonFileStorage = JsonFileStorage(file)
