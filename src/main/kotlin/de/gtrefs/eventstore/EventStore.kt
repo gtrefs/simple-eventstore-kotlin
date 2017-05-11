@@ -1,15 +1,11 @@
 package de.gtrefs.eventstore
 
-import java.util.concurrent.CompletableFuture
-
 
 class EventStore(val storage: Storage) {
 
-    fun <S> project(projection: (List<DomainEvent>) -> S) : CompletableFuture<S> {
-        return storage.readAllAsync()
+    fun <S> project(projection: (List<DomainEvent>) -> S) = storage.readAllAsync()
                 .thenApply { it.map { it.deserialize() } }
                 .thenApply { projection(it) }
-    }
 
     fun storeEvent(event: DomainEvent, expectedVersion: Version) {
         val currentVersion = version()
