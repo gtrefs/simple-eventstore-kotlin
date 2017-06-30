@@ -55,18 +55,14 @@ class Serialization<E: DomainEvent> {
 
     private fun parametersOf(event: E,
                              default: Map<String, Any> = emptyMap(),
-                             init: ((ParameterContainer) -> (E) -> ParameterContainer)? = null): Map<String, Any> {
-
-        val container = initContainer(event, init)
-        val explicit = container.explicit.toMap()
-        val exclude = container.exclude
-
-        return when(Pair(explicit.isEmpty(), exclude.isEmpty())){
-            Pair(true, true) -> default
-            Pair(true, false) -> remove(from = default, keys = exclude)
-            else -> explicit
+                             init: ((ParameterContainer) -> (E) -> ParameterContainer)? = null): Map<String, Any> =
+        with(initContainer(event, init)){
+            when(Pair(explicit.isEmpty(), exclude.isEmpty())){
+                Pair(true, true) -> default
+                Pair(true, false) -> remove(from = default, keys = exclude)
+                else -> explicit.toMap()
+            }
         }
-    }
 
     private fun initContainer(event: E, init: ((ParameterContainer) -> (E) -> ParameterContainer)?) =
             ParameterContainer().apply {
