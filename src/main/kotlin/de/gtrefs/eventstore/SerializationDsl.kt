@@ -8,10 +8,8 @@ fun <E: DomainEvent> serialize(event: E): SerializedDomainEvent = serialize<E>()
 
 fun <E: DomainEvent> serialize(): Serialization<E> = serialize<E>{}
 
-fun <E : DomainEvent> serialize(init: Serialization<E>.() -> Unit): Serialization<E> {
-    val serialization = Serialization<E>()
-    serialization.init()
-    return serialization
+fun <E : DomainEvent> serialize(init: Serialization<E>.() -> Unit): Serialization<E> = Serialization<E>().apply {
+    this.init()
 }
 
 class Serialization<E: DomainEvent> {
