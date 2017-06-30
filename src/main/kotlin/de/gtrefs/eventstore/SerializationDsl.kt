@@ -15,7 +15,7 @@ class Serialization<E: DomainEvent> {
 
     private var type: (E) -> Optional<String> = { empty() }
     private var initMeta: (ParameterContainer) -> (E) -> ParameterContainer = { container -> { event -> container } }
-    private var initPayload: ((ParameterContainer) -> (E) -> ParameterContainer)? = null
+    private var initPayload: (ParameterContainer) -> (E) -> ParameterContainer = { container -> { event -> container } }
 
     fun type(type: (E) -> String): Unit {
         this.type = { Optional.of(type(it)) }
