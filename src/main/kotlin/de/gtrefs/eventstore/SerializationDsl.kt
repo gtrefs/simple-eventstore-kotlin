@@ -6,9 +6,7 @@ import kotlin.reflect.full.primaryConstructor
 
 fun <E: DomainEvent> serialize(event: E): SerializedDomainEvent = serialize<E>()(event)
 
-fun <E: DomainEvent> serialize(): Serialization<E> = serialize<E>{}
-
-fun <E : DomainEvent> serialize(init: Serialization<E>.() -> Unit): Serialization<E> = Serialization<E>().apply {
+fun <E : DomainEvent> serialize(init: Serialization<E>.() -> Unit = {}): Serialization<E> = Serialization<E>().apply {
     this.init()
 }
 
