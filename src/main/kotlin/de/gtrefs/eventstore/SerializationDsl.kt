@@ -1,6 +1,7 @@
 package de.gtrefs.eventstore
 
 import java.util.*
+import java.util.Optional.empty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
@@ -12,12 +13,12 @@ fun <E : DomainEvent> serialize(init: Serialization<E>.() -> Unit = {}): Seriali
 
 class Serialization<E: DomainEvent> {
 
-    private var type: ((E) -> String)? = null
+    private var type: (E) -> Optional<String> = { empty() }
     private var initMeta: ((ParameterContainer) -> (E) -> ParameterContainer)? = null
     private var initPayload: ((ParameterContainer) -> (E) -> ParameterContainer)? = null
 
     fun type(type: (E) -> String): Unit {
-        this.type = type
+        this.type = { Optional.of(type(it)) }
     }
 
     fun  meta(init: ParameterContainer.(E) -> Unit): Unit {
@@ -34,7 +35,7 @@ class Serialization<E: DomainEvent> {
     operator fun invoke(event: E): SerializedDomainEvent =
             SerializedDomainEvent(typeOf(event), metaOf(event), payloadOf(event))
 
-    private fun typeOf(event: E) = this.type?.invoke(event) ?: event.javaClass.name
+    private fun typeOf(event: E) = type(event).orElse(event.javaClass.name)
 
     private fun metaOf(event: E) = parametersOf(event, init = initMeta)
 
