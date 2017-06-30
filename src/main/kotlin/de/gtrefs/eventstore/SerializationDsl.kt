@@ -33,10 +33,7 @@ class Serialization<E: DomainEvent> {
     }
 
     private fun collect(init: ParameterContainer.(E) -> Unit): (ParameterContainer) -> (E) -> ParameterContainer =
-            {container -> {event ->
-                container.init(event)
-                container
-            }}
+            { container -> { event -> container.apply { this.init(event) } } }
 
     operator fun invoke(event: E): SerializedDomainEvent =
             SerializedDomainEvent(typeOf(event), metaOf(event), payloadOf(event))
