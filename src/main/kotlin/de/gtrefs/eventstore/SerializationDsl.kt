@@ -21,16 +21,13 @@ class Serialization<E: DomainEvent> {
         this.type = { Optional.of(type(it)) }
     }
 
-    fun  meta(description: ParameterContainer.(E) -> Unit): Unit {
-        initMeta = describeWith(description)
+    fun  meta(describe: ParameterContainer.(E) -> Unit): Unit {
+        initMeta = { container -> { container.apply { describe(it) } } }
     }
 
-    fun  payload(description: ParameterContainer.(E) -> Unit): Unit {
-        initPayload = describeWith(description)
+    fun  payload(describe: ParameterContainer.(E) -> Unit): Unit {
+        initPayload = { container -> { container.apply { describe(it) } } }
     }
-
-    private fun describeWith(init: ParameterContainer.(E) -> Unit): (ParameterContainer) -> (E) -> ParameterContainer =
-            { container -> { event -> container.apply { this.init(event) } } }
 
     operator fun invoke(event: E): SerializedDomainEvent =
             SerializedDomainEvent(typeOf(event), metaOf(event), payloadOf(event))
