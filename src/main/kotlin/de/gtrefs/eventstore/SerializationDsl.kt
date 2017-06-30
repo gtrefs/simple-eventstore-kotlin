@@ -13,30 +13,30 @@ fun <E : DomainEvent> serialize(init: Serialization<E>.() -> Unit = {}): Seriali
 
 class Serialization<E: DomainEvent> {
 
-    private var type: (E) -> Optional<String> = { empty() }
-    private var initMeta: ParameterContainer.(E) -> Unit = { }
-    private var initPayload: ParameterContainer.(E) -> Unit = { }
+    private var typeDescription: (E) -> Optional<String> = { empty() }
+    private var metaDescription: ParameterContainer.(E) -> Unit = { }
+    private var payloadDescription: ParameterContainer.(E) -> Unit = { }
 
-    fun type(type: (E) -> String): Unit {
-        this.type = { Optional.of(type(it)) }
+    fun type(description: (E) -> String): Unit {
+        this.typeDescription = { Optional.of(description(it)) }
     }
 
-    fun  meta(describe: ParameterContainer.(E) -> Unit): Unit {
-        initMeta = describe
+    fun  meta(description: ParameterContainer.(E) -> Unit): Unit {
+        metaDescription = description
     }
 
-    fun  payload(describe: ParameterContainer.(E) -> Unit): Unit {
-        initPayload = describe
+    fun  payload(description: ParameterContainer.(E) -> Unit): Unit {
+        payloadDescription = description
     }
 
     operator fun invoke(event: E): SerializedDomainEvent =
             SerializedDomainEvent(typeOf(event), metaOf(event), payloadOf(event))
 
-    private fun typeOf(event: E) = type(event).orElse(event.javaClass.name)
+    private fun typeOf(event: E) = typeDescription(event).orElse(event.javaClass.name)
 
-    private fun metaOf(event: E) = parametersOf(event, init = initMeta)
+    private fun metaOf(event: E) = parametersOf(event, description = metaDescription)
 
-    private fun payloadOf(event: E) = parametersOf(event, parametersByName(event), init = initPayload)
+    private fun payloadOf(event: E) = parametersOf(event, parametersByName(event), description = payloadDescription)
 
     private fun parametersByName(event: E): Map<String, Any> {
         val parameters = event.javaClass.kotlin.primaryConstructor?.parameters?.map { it.name } ?: emptyList()
@@ -49,8 +49,8 @@ class Serialization<E: DomainEvent> {
 
     private fun parametersOf(event: E,
                              default: Map<String, Any> = emptyMap(),
-                             init: ParameterContainer.(E) -> Unit): Map<String, Any> =
-        with(initContainer(event, init)){
+                             description: ParameterContainer.(E) -> Unit): Map<String, Any> =
+        with(initContainer(event, description)){
             when(Pair(explicit.isEmpty(), exclude.isEmpty())){
                 Pair(true, true) -> default
                 Pair(true, false) -> remove(from = default, keys = exclude)
