@@ -45,7 +45,7 @@ class Serialization<E: DomainEvent> {
 
     private fun metaOf(event: E) = parametersOf(event, init = initMeta)
 
-    private fun payloadOf(event: E) = parametersOf(event, parametersByName(event), initPayload)
+    private fun payloadOf(event: E) = parametersOf(event, parametersByName(event), init = initPayload)
 
     private fun parametersByName(event: E): Map<String, Any> {
         val parameters = event.javaClass.kotlin.primaryConstructor?.parameters?.map { it.name } ?: emptyList()
