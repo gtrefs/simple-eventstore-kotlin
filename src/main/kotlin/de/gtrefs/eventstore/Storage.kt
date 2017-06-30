@@ -41,9 +41,10 @@ class InMemory : Storage {
 
 
 class JsonFileStorage(val file: File) : Storage {
-    val mapper = jacksonObjectMapper()
-            .enableDefaultTyping(ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT)
-            .registerModule(JavaTimeModule())
+    val mapper = jacksonObjectMapper().apply {
+        enableDefaultTyping(ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT)
+        registerModule(JavaTimeModule())
+    }
 
     override fun write(it: SerializedDomainEvent): Unit {
         val json = mapper.writeValueAsString(it) + System.lineSeparator()
