@@ -14,19 +14,19 @@ fun <E : DomainEvent> serialize(init: Serialization<E>.() -> Unit = {}): Seriali
 class Serialization<E: DomainEvent> {
 
     private var type: (E) -> Optional<String> = { empty() }
-    private var initMeta: (ParameterContainer) -> (E) -> ParameterContainer = {{ _ -> it }}
-    private var initPayload: (ParameterContainer) -> (E) -> ParameterContainer = {{ _ -> it }}
+    private var initMeta: ParameterContainer.(E) -> Unit = { }
+    private var initPayload: ParameterContainer.(E) -> Unit = { }
 
     fun type(type: (E) -> String): Unit {
         this.type = { Optional.of(type(it)) }
     }
 
     fun  meta(describe: ParameterContainer.(E) -> Unit): Unit {
-        initMeta = { container -> { container.apply { describe(it) } } }
+        initMeta = describe
     }
 
     fun  payload(describe: ParameterContainer.(E) -> Unit): Unit {
-        initPayload = { container -> { container.apply { describe(it) } } }
+        initPayload = describe
     }
 
     operator fun invoke(event: E): SerializedDomainEvent =
@@ -49,7 +49,7 @@ class Serialization<E: DomainEvent> {
 
     private fun parametersOf(event: E,
                              default: Map<String, Any> = emptyMap(),
-                             init: ((ParameterContainer) -> (E) -> ParameterContainer)? = null): Map<String, Any> =
+                             init: ParameterContainer.(E) -> Unit): Map<String, Any> =
         with(initContainer(event, init)){
             when(Pair(explicit.isEmpty(), exclude.isEmpty())){
                 Pair(true, true) -> default
@@ -58,9 +58,9 @@ class Serialization<E: DomainEvent> {
             }
         }
 
-    private fun initContainer(event: E, init: ((ParameterContainer) -> (E) -> ParameterContainer)?) =
+    private fun initContainer(event: E, init: ParameterContainer.(E) -> Unit) =
             ParameterContainer().apply {
-                init?.let { it(this)(event) }
+                this.init(event)
             }
 
     private fun remove(from: Map<String, Any>, keys: ArrayList<String>) = from.filterKeys { it !in keys }
