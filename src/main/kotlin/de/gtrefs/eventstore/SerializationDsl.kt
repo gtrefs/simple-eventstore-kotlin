@@ -67,23 +67,23 @@ class Serialization<E: DomainEvent> {
             }
 
     private fun remove(from: Map<String, Any>, keys: ArrayList<String>) = from.filterKeys { it !in keys }
+}
 
-    class ParameterContainer {
-        internal val explicit = arrayListOf<Pair<String, Any>>()
-        internal val exclude = arrayListOf<String>()
+class ParameterContainer {
+    internal val explicit = arrayListOf<Pair<String, Any>>()
+    internal val exclude = arrayListOf<String>()
 
-        infix fun String.with(that: Any): Unit {
-            if(this in exclude){
-                throw IllegalArgumentException("Cannot add parameter with name '${this}'. It was excluded before.")
-            }
-            explicit += this to that
+    infix fun String.with(that: Any): Unit {
+        if(this in exclude){
+            throw IllegalArgumentException("Cannot add parameter with name '${this}'. It was excluded before.")
         }
+        explicit += this to that
+    }
 
-        fun without(parameter: String) {
-            if(explicit.any { it.first == parameter }){
-                throw IllegalArgumentException("Cannot exclude parameter '$parameter'. It was explicitly added before.")
-            }
-            exclude += parameter
+    fun without(parameter: String) {
+        if(explicit.any { it.first == parameter }){
+            throw IllegalArgumentException("Cannot exclude parameter '$parameter'. It was explicitly added before.")
         }
+        exclude += parameter
     }
 }
