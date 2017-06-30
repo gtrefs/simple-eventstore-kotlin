@@ -71,11 +71,10 @@ class Serialization<E: DomainEvent> {
         }
     }
 
-    private fun initContainer(event: E, init: ((ParameterContainer) -> (E) -> ParameterContainer)?): ParameterContainer {
-        val container = ParameterContainer()
-        init?.invoke(container)?.invoke(event)
-        return container
-    }
+    private fun initContainer(event: E, init: ((ParameterContainer) -> (E) -> ParameterContainer)?) =
+            ParameterContainer().apply {
+                init?.let { it(this)(event) }
+            }
 
     private fun remove(from: Map<String, Any>, keys: ArrayList<String>) = from.filterKeys { it !in keys }
 
