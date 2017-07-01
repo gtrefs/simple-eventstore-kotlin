@@ -5,13 +5,13 @@ import java.util.Optional.empty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
-fun <E: DomainEvent> serialize(event: E): SerializedDomainEvent = serialize<E>()(event)
+fun <E : DomainEvent> serialize(event: E): SerializedDomainEvent = serialize<E>()(event)
 
 fun <E : DomainEvent> serialize(init: Serialization<E>.() -> Unit = {}): Serialization<E> = Serialization<E>().apply {
     this.init()
 }
 
-class Serialization<E: DomainEvent> {
+class Serialization<E : DomainEvent> {
 
     internal var typeDescription: (E) -> Optional<String> = { empty() }
     internal var metaDescription: Container.(E) -> Unit = { }
@@ -21,11 +21,11 @@ class Serialization<E: DomainEvent> {
         typeDescription = { Optional.of(description(it)) }
     }
 
-    fun  meta(description: Container.(E) -> Unit): Unit {
+    fun meta(description: Container.(E) -> Unit): Unit {
         metaDescription = description
     }
 
-    fun  payload(description: Container.(E) -> Unit): Unit {
+    fun payload(description: Container.(E) -> Unit): Unit {
         payloadDescription = description
     }
 
@@ -37,27 +37,27 @@ class Container {
     internal val exclude = arrayListOf<String>()
 
     infix fun String.with(that: Any): Unit {
-        if(this in exclude){
+        if (this in exclude) {
             throw IllegalArgumentException("Cannot add parameter with name '${this}'. It was excluded before.")
         }
         explicit += this to that
     }
 
     fun without(parameter: String) {
-        if(explicit.any { it.first == parameter }){
+        if (explicit.any { it.first == parameter }) {
             throw IllegalArgumentException("Cannot exclude parameter '$parameter'. It was explicitly added before.")
         }
         exclude += parameter
     }
 }
 
-internal data class Interpreter<E: DomainEvent>(val serialization:Serialization<E>){
-    internal fun run(event: E):SerializedDomainEvent = with(serialization) {
+internal data class Interpreter<E : DomainEvent>(val serialization: Serialization<E>) {
+    internal fun run(event: E): SerializedDomainEvent = with(serialization) {
         val type = typeDescription(event).orElse(event.javaClass.name)
         val meta = partFor(event, and = metaDescription)
         val payload = partFor(event, defaultPayload(event), and = payloadDescription)
 
-        SerializedDomainEvent(type,meta,payload)
+        SerializedDomainEvent(type, meta, payload)
     }
 
     private fun defaultPayload(event: E): Map<String, Any> {
@@ -69,7 +69,7 @@ internal data class Interpreter<E: DomainEvent>(val serialization:Serialization<
         }.toMap()
     }
 
-    private fun partFor(event: E, default: Map<String, Any> = emptyMap(), and: Container.(E) -> Unit) = with(Container()){
+    private fun partFor(event: E, default: Map<String, Any> = emptyMap(), and: Container.(E) -> Unit) = with(Container()) {
         and(event)
         extractParameters(default)
     }
