@@ -53,17 +53,14 @@ internal data class Interpreter<E: DomainEvent>(val serialization:Serialization<
     private fun parametersOf(event: E,
                              default: Map<String, Any> = emptyMap(),
                              description: ParameterContainer.(E) -> Unit): Map<String, Any> =
-            with(containerFor(event, with = description)){
+            with(ParameterContainer()){
+                description(event)
                 when(Pair(explicit.isEmpty(), exclude.isEmpty())){
                     Pair(true, true) -> default
                     Pair(true, false) -> remove(from = default, keys = exclude)
                     else -> explicit.toMap()
                 }
             }
-
-    private fun containerFor(event: E, with: ParameterContainer.(E) -> Unit) = ParameterContainer().apply {
-        with(event)
-    }
 
     private fun remove(from: Map<String, Any>, keys: ArrayList<String>) = from.filterKeys { it !in keys }
 }
