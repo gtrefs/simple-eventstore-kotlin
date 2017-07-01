@@ -60,7 +60,7 @@ class Serialization<E: DomainEvent> {
 
     private fun initContainer(event: E, init: ParameterContainer.(E) -> Unit) =
             ParameterContainer().apply {
-                this.init(event)
+                init(event)
             }
 
     private fun remove(from: Map<String, Any>, keys: ArrayList<String>) = from.filterKeys { it !in keys }
