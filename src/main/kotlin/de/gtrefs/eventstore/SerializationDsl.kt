@@ -35,24 +35,15 @@ class Serialization<E: DomainEvent> {
 internal data class Interpreter<E: DomainEvent>(val serialization:Serialization<E>){
     internal fun run(event: E):SerializedDomainEvent = with(serialization) {
         val type = typeDescription(event).orElse(event.javaClass.name)
-        val meta = parametersOf(event, fillWith = metaDescription)
-        val payload = parametersOf(event, parametersByName(event), fillWith = payloadDescription)
+        val meta = computeParameters(event, fillWith = metaDescription)
+        val payload = computeParameters(event, parametersByName(event), fillWith = payloadDescription)
 
         SerializedDomainEvent(type,meta,payload)
     }
 
-    private fun parametersByName(event: E): Map<String, Any> {
-        val parameters = event.javaClass.kotlin.primaryConstructor?.parameters?.map { it.name } ?: emptyList()
-        val properties = event.javaClass.kotlin.memberProperties
-
-        return properties.filter { parameters.contains(it.name) }.map {
-            it.name to it.get(event)!!
-        }.toMap()
-    }
-
-    private fun parametersOf(event: E,
-                             default: Map<String, Any> = emptyMap(),
-                             fillWith: Container.(E) -> Unit): Map<String, Any> = with(Container()){
+    private fun computeParameters(event: E,
+                                  default: Map<String, Any> = emptyMap(),
+                                  fillWith: Container.(E) -> Unit): Map<String, Any> = with(Container()){
         fillWith(event)
         extractParameters(default)
     }
@@ -66,6 +57,15 @@ internal data class Interpreter<E: DomainEvent>(val serialization:Serialization<
     }
 
     private fun remove(from: Map<String, Any>, keys: ArrayList<String>) = from.filterKeys { it !in keys }
+
+    private fun parametersByName(event: E): Map<String, Any> {
+        val parameters = event.javaClass.kotlin.primaryConstructor?.parameters?.map { it.name } ?: emptyList()
+        val properties = event.javaClass.kotlin.memberProperties
+
+        return properties.filter { parameters.contains(it.name) }.map {
+            it.name to it.get(event)!!
+        }.toMap()
+    }
 }
 
 class Container {
