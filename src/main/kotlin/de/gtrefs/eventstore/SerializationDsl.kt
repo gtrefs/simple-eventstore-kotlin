@@ -32,6 +32,25 @@ class Serialization<E: DomainEvent> {
     operator fun invoke(event: E): SerializedDomainEvent = Interpreter(this).run(event)
 }
 
+class Container {
+    internal val explicit = arrayListOf<Pair<String, Any>>()
+    internal val exclude = arrayListOf<String>()
+
+    infix fun String.with(that: Any): Unit {
+        if(this in exclude){
+            throw IllegalArgumentException("Cannot add parameter with name '${this}'. It was excluded before.")
+        }
+        explicit += this to that
+    }
+
+    fun without(parameter: String) {
+        if(explicit.any { it.first == parameter }){
+            throw IllegalArgumentException("Cannot exclude parameter '$parameter'. It was explicitly added before.")
+        }
+        exclude += parameter
+    }
+}
+
 internal data class Interpreter<E: DomainEvent>(val serialization:Serialization<E>){
     internal fun run(event: E):SerializedDomainEvent = with(serialization) {
         val type = typeDescription(event).orElse(event.javaClass.name)
@@ -65,24 +84,5 @@ internal data class Interpreter<E: DomainEvent>(val serialization:Serialization<
         return properties.filter { parameters.contains(it.name) }.map {
             it.name to it.get(event)!!
         }.toMap()
-    }
-}
-
-class Container {
-    internal val explicit = arrayListOf<Pair<String, Any>>()
-    internal val exclude = arrayListOf<String>()
-
-    infix fun String.with(that: Any): Unit {
-        if(this in exclude){
-            throw IllegalArgumentException("Cannot add parameter with name '${this}'. It was excluded before.")
-        }
-        explicit += this to that
-    }
-
-    fun without(parameter: String) {
-        if(explicit.any { it.first == parameter }){
-            throw IllegalArgumentException("Cannot exclude parameter '$parameter'. It was explicitly added before.")
-        }
-        exclude += parameter
     }
 }
