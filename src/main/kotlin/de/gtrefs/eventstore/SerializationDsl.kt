@@ -18,7 +18,7 @@ class Serialization<E: DomainEvent> {
     private var payloadDescription: ParameterContainer.(E) -> Unit = { }
 
     fun type(description: (E) -> String): Unit {
-        this.typeDescription = { Optional.of(description(it)) }
+        typeDescription = { Optional.of(description(it)) }
     }
 
     fun  meta(description: ParameterContainer.(E) -> Unit): Unit {
