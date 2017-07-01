@@ -32,8 +32,8 @@ class Serialization<E: DomainEvent> {
     operator fun invoke(event: E): SerializedDomainEvent = Interpreter(this).run(event)
 }
 
-data class Interpreter<E: DomainEvent>(val serialization:Serialization<E>){
-    fun run(event: E):SerializedDomainEvent = with(serialization) {
+internal data class Interpreter<E: DomainEvent>(val serialization:Serialization<E>){
+    internal fun run(event: E):SerializedDomainEvent = with(serialization) {
         val type = typeDescription(event).orElse(event.javaClass.name)
         val meta = parametersOf(event, description = metaDescription)
         val payload = parametersOf(event, parametersByName(event), description = payloadDescription)
@@ -53,7 +53,7 @@ data class Interpreter<E: DomainEvent>(val serialization:Serialization<E>){
     private fun parametersOf(event: E,
                              default: Map<String, Any> = emptyMap(),
                              description: ParameterContainer.(E) -> Unit): Map<String, Any> =
-            with(initContainer(event, description)){
+            with(containerFor(event, with = description)){
                 when(Pair(explicit.isEmpty(), exclude.isEmpty())){
                     Pair(true, true) -> default
                     Pair(true, false) -> remove(from = default, keys = exclude)
@@ -61,8 +61,8 @@ data class Interpreter<E: DomainEvent>(val serialization:Serialization<E>){
                 }
             }
 
-    private fun initContainer(event: E, init: ParameterContainer.(E) -> Unit) = ParameterContainer().apply {
-        init(event)
+    private fun containerFor(event: E, with: ParameterContainer.(E) -> Unit) = ParameterContainer().apply {
+        with(event)
     }
 
     private fun remove(from: Map<String, Any>, keys: ArrayList<String>) = from.filterKeys { it !in keys }
