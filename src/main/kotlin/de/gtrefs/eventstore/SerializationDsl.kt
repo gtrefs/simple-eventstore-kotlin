@@ -61,10 +61,9 @@ data class Interpreter<E: DomainEvent>(val serialization:Serialization<E>){
                 }
             }
 
-    private fun initContainer(event: E, init: ParameterContainer.(E) -> Unit) =
-            ParameterContainer().apply {
-                init(event)
-            }
+    private fun initContainer(event: E, init: ParameterContainer.(E) -> Unit) = ParameterContainer().apply {
+        init(event)
+    }
 
     private fun remove(from: Map<String, Any>, keys: ArrayList<String>) = from.filterKeys { it !in keys }
 }
