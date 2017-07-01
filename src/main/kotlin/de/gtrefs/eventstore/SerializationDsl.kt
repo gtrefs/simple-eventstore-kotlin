@@ -54,16 +54,23 @@ class Container {
 internal data class Interpreter<E: DomainEvent>(val serialization:Serialization<E>){
     internal fun run(event: E):SerializedDomainEvent = with(serialization) {
         val type = typeDescription(event).orElse(event.javaClass.name)
-        val meta = computeParameters(event, fillWith = metaDescription)
-        val payload = computeParameters(event, parametersByName(event), fillWith = payloadDescription)
+        val meta = partFor(event, and = metaDescription)
+        val payload = partFor(event, defaultPayload(event), and = payloadDescription)
 
         SerializedDomainEvent(type,meta,payload)
     }
 
-    private fun computeParameters(event: E,
-                                  default: Map<String, Any> = emptyMap(),
-                                  fillWith: Container.(E) -> Unit): Map<String, Any> = with(Container()){
-        fillWith(event)
+    private fun defaultPayload(event: E): Map<String, Any> {
+        val parameters = event.javaClass.kotlin.primaryConstructor?.parameters?.map { it.name } ?: emptyList()
+        val properties = event.javaClass.kotlin.memberProperties
+
+        return properties.filter { parameters.contains(it.name) }.map {
+            it.name to it.get(event)!!
+        }.toMap()
+    }
+
+    private fun partFor(event: E, default: Map<String, Any> = emptyMap(), and: Container.(E) -> Unit) = with(Container()){
+        and(event)
         extractParameters(default)
     }
 
@@ -76,13 +83,4 @@ internal data class Interpreter<E: DomainEvent>(val serialization:Serialization<
     }
 
     private fun remove(from: Map<String, Any>, keys: ArrayList<String>) = from.filterKeys { it !in keys }
-
-    private fun parametersByName(event: E): Map<String, Any> {
-        val parameters = event.javaClass.kotlin.primaryConstructor?.parameters?.map { it.name } ?: emptyList()
-        val properties = event.javaClass.kotlin.memberProperties
-
-        return properties.filter { parameters.contains(it.name) }.map {
-            it.name to it.get(event)!!
-        }.toMap()
-    }
 }
