@@ -13,9 +13,9 @@ fun <E : DomainEvent> serialize(init: Serialization<E>.() -> Unit = {}): Seriali
 
 class Serialization<E: DomainEvent> {
 
-    private var typeDescription: (E) -> Optional<String> = { empty() }
-    private var metaDescription: ParameterContainer.(E) -> Unit = { }
-    private var payloadDescription: ParameterContainer.(E) -> Unit = { }
+    internal var typeDescription: (E) -> Optional<String> = { empty() }
+    internal var metaDescription: ParameterContainer.(E) -> Unit = { }
+    internal var payloadDescription: ParameterContainer.(E) -> Unit = { }
 
     fun type(description: (E) -> String): Unit {
         typeDescription = { Optional.of(description(it)) }
@@ -29,14 +29,17 @@ class Serialization<E: DomainEvent> {
         payloadDescription = description
     }
 
-    operator fun invoke(event: E): SerializedDomainEvent =
-            SerializedDomainEvent(typeOf(event), metaOf(event), payloadOf(event))
+    operator fun invoke(event: E): SerializedDomainEvent = Interpreter(this).run(event)
+}
 
-    private fun typeOf(event: E) = typeDescription(event).orElse(event.javaClass.name)
+data class Interpreter<E: DomainEvent>(val serialization:Serialization<E>){
+    fun run(event: E):SerializedDomainEvent = with(serialization) {
+        val type = typeDescription(event).orElse(event.javaClass.name)
+        val meta = parametersOf(event, description = metaDescription)
+        val payload = parametersOf(event, parametersByName(event), description = payloadDescription)
 
-    private fun metaOf(event: E) = parametersOf(event, description = metaDescription)
-
-    private fun payloadOf(event: E) = parametersOf(event, parametersByName(event), description = payloadDescription)
+        SerializedDomainEvent(type,meta,payload)
+    }
 
     private fun parametersByName(event: E): Map<String, Any> {
         val parameters = event.javaClass.kotlin.primaryConstructor?.parameters?.map { it.name } ?: emptyList()
@@ -50,13 +53,13 @@ class Serialization<E: DomainEvent> {
     private fun parametersOf(event: E,
                              default: Map<String, Any> = emptyMap(),
                              description: ParameterContainer.(E) -> Unit): Map<String, Any> =
-        with(initContainer(event, description)){
-            when(Pair(explicit.isEmpty(), exclude.isEmpty())){
-                Pair(true, true) -> default
-                Pair(true, false) -> remove(from = default, keys = exclude)
-                else -> explicit.toMap()
+            with(initContainer(event, description)){
+                when(Pair(explicit.isEmpty(), exclude.isEmpty())){
+                    Pair(true, true) -> default
+                    Pair(true, false) -> remove(from = default, keys = exclude)
+                    else -> explicit.toMap()
+                }
             }
-        }
 
     private fun initContainer(event: E, init: ParameterContainer.(E) -> Unit) =
             ParameterContainer().apply {
