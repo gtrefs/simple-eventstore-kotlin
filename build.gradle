@@ -78,7 +78,6 @@ dependencies {
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.14'
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:0.14'
 
-    testCompile 'com.google.guava:guava:21.0'
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     testCompile "com.winterbe:expekt:0.5.0"
     testCompile "org.jetbrains.spek:spek-api:$spek_version"
