@@ -30,6 +30,8 @@ apply plugin:  "me.champeau.gradle.jmh"
 group = 'de.gtrefs'
 version = '0.0.1-SNAPSHOT'
 
+// Plugin configurations
+
 junitPlatform {
     filters {
         engines {
@@ -37,6 +39,22 @@ junitPlatform {
         }
     }
 }
+
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
+}
+
+jmh {
+    iterations = 10
+    warmupIterations = 10
+    fork = 2
+    threads = 1
+    profilers = ["stack"]
+}
+
+// configurations and source sets
 
 sourceSets {
     examples {
@@ -54,14 +72,6 @@ sourceSets {
     def sourceSet = sourceSets.maybeCreate(it)
     sourceSets.test.kotlin.srcDirs += sourceSet.kotlin.srcDirs
     sourceSets.test.resources.srcDirs += sourceSet.resources.srcDirs
-}
-
-jmh {
-    iterations = 10
-    warmupIterations = 10
-    fork = 2
-    threads = 1
-    profilers = ["stack"]
 }
 
 repositories {
